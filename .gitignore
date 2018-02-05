@@ -1,0 +1,7 @@
+.vscode
+.cache
+
+mock_texturecache
+__pycache__
+
+*.pyc
