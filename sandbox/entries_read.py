@@ -1,11 +1,20 @@
 
+
+'''
+SANDBOX FILE
+THIS FILE IS NOT SOURCE CODE
+
+Cache header reading is explored here. 
+
+"texture.entries" contains a general 44-byte header and N 28-byte entry headers
+"texture.cache" contains N 600-byte entries
+'''
+
 import os
 import sys
 import struct
 from array import array
 from pprint import pprint
-
-#%% Functions
 
 
 def format_uuid_from_ints(u8_vals):
@@ -15,7 +24,7 @@ def format_uuid_from_ints(u8_vals):
     return fmt % vals
 
 
-#%% Open the cache entries file
+# --- Open the cache entries file
 
 entries_file = open(
     '../tests/mock_texturecache/texturecache/texture.entries',
@@ -23,7 +32,7 @@ entries_file = open(
 )
 
 
-#%% Header and entry unpacking
+# --- Header and entry unpacking
 
 # HEADER STRUCT BYTE LAYOUT
 #
@@ -34,7 +43,7 @@ entries_file = open(
 #                                   -----------
 #                                      44 bytes
 #
-# NOTE: The encoder version I found from looking at the binary
+# NOTE: The encoder version was found by looking at the binary
 # contents and seeing how many empty bytes there were after
 # start of the encoder. Turns out this was 32-bytes.
 
@@ -82,20 +91,20 @@ for i in range(entry_count):
 # if this doesn't throw, we're golden!
 assert len(entries) == entry_count
 
-#%% Read entries from cache file
+# --- Read entries from cache file
 
 cache_file = open(
     '../tests/mock_texturecache/texturecache/texture.cache',
     'rb'
 )
 
-cache_file_size = os.path.getsize(
-    '../tests/mock_texturecache/texturecache/texture.cache'
-)
+chunks = []
+for i in range(entry_count):
+    chunks.append(cache_file.read(600))
 
-print(cache_file_size/600)
+assert len(chunks) == entry_count
 
 
-#%% Close the cache entries file
+# Close the cache entries file
 entries_file.close()
 cache_file.close()
