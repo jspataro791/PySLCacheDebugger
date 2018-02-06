@@ -1,7 +1,9 @@
 .vscode
 .cache
 
-mock_texturecache
+sandbox/output_bmp
+sandbox/output_j2c
+
 __pycache__
 
 *.pyc
