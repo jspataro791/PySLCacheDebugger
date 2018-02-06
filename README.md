@@ -1,5 +1,5 @@
 # PySLCacheDebugger
-A cache searcher/debugger for the Second Life viewer texture cache. This project is still in initial development with the hopes of soon providing a user interface to browse the cache (thumbnails).
+A cache searcher/debugger for the Second Life viewer texture cache. This project is still in initial development with the hopes of soon providing a user interface to browse the cache (thumbnails). This project aims to be an open source replacement to the widely-used SLCacheViewer which was recently broken by a change in the SL viewer source code.
 
 ## Dependencies
 * Python 3.6
