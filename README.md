@@ -6,6 +6,7 @@ A cache searcher/debugger for the Second Life viewer texture cache. This project
 * [Glymur](https://github.com/quintusdias/glymur) and [OpenJPEG](http://www.openjpeg.org/)
 * Scipy
 * Numpy
+* PyQt5
 
 ## Notes
 

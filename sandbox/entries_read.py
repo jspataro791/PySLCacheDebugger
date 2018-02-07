@@ -16,7 +16,6 @@ import shutil
 import struct
 import sys
 from array import array
-from io import StringIO
 from pprint import pprint
 
 import glymur
