@@ -4,6 +4,7 @@ Contains utility functions .
 (logging, formatters, converters, etc.)
 '''
 
+from traceback import format_exc
 
 def WARN(msg):
     ''' Prints/logs a warning message. '''
@@ -11,8 +12,11 @@ def WARN(msg):
     print('!!WARN: %s' % msg)
 
 
-def ERROR(msg):
-    ''' Prints/logs an error message. '''
+def ERROR(msg, add_exception=False):
+    ''' Prints/logs an error message.'''
+
+    if add_exception:
+        msg += '\n%s' % format_exc()
 
     print('!!ERROR: %s' % msg)
 

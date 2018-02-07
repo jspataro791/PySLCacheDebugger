@@ -163,7 +163,7 @@ class TextureCacheFetcher(object):
             try:
                 unpacked = struct.unpack(HEADER_STRUCT_FORMAT, header)
             except struct.error:
-                ERROR('Could not read texture cache header.\n%s' % format_exc())
+                ERROR('Could not unpack texture cache header.', add_exception=True)
                 raise TextureFetchException('Failed to unpack texture cache header.')
             version = '%0.2f' % unpacked[0]
             address_size = unpacked[1]
