@@ -6,15 +6,21 @@ Contains utility functions .
 
 from traceback import format_exc
 
+from appconfig import *
+
 
 def WARN(msg):
     ''' Prints/logs a warning message. '''
+    if not WARN_ENABLED:
+        return
 
     print('!!WARN: %s' % msg)
 
 
 def ERROR(msg, add_exception=False):
     ''' Prints/logs an error message.'''
+    if not ERROR_ENABLED:
+        return
 
     if add_exception:
         msg += '\n%s' % format_exc()
@@ -24,8 +30,10 @@ def ERROR(msg, add_exception=False):
 
 def INFO(msg):
     ''' Prints/logs an info message. '''
+    if not INFO_ENABLED:
+        return
 
-    print('INFO: %msg')
+    print('??INFO: %s' % msg)
 
 
 def format_uuid_from_u8(u8_vals):
