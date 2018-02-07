@@ -6,6 +6,7 @@ Contains utility functions .
 
 from traceback import format_exc
 
+
 def WARN(msg):
     ''' Prints/logs a warning message. '''
 
