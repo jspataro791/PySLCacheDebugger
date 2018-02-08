@@ -9,8 +9,10 @@ texture cache.
 import os
 import struct
 import sys
-from collections import namedtuple
+import weakref
+
 from io import BytesIO
+from collections import namedtuple
 from traceback import format_exc
 
 import glymur
@@ -200,13 +202,23 @@ class TextureCacheFetcher(object):
         return entries
 
     def load_texture_cache(self, max_count=None):
+        ''' Loads texture cache in the local/memory cache. '''
 
         entry_file_contents = self.load_entry_file_contents()
+        cache_file_contents = self.load_cache_file_contents()
         header = self.load_header(entry_file_contents)
         entries = self.load_entries(entry_file_contents, header.entry_count)
 
-        
-
+        for entry in entries:
+            uuid = entry.uuid
+            try:
+                cache = cache_file_contents.read(TEXTURE_CACHE_BYTE_COUNT)
+                self.local_texture_cache.add_cache(uuid, cache)
+            except IOError as e:
+                WARN('Failed to load texture cache for "%s".' % uuid)
+                ERROR('', add_exception=True)
+                self.local_texture_cache(uuid, None)
+            
     def load_texture_body(self, uuid):
 
         ''' Returns the contents of a texture's body file. '''
@@ -231,6 +243,9 @@ class TextureCache(object):
     def __init__(self):
         self._cache = {}
 
+    def __len__(self):
+        return len(self._cache)
+
     def add_cache(self, uuid, cache):
         ''' Add cache contents for UUID '''
         
@@ -254,6 +269,8 @@ class TextureCache(object):
         
         self._cache = {}
 
+class TextureCacheObserver(object):
+    pass
 
 class TextureCacheHeader(object):
 

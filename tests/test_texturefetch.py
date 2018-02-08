@@ -38,3 +38,4 @@ def test_load_entries(texture_fetcher):
 
 def test_load_cache(texture_fetcher):
     texture_fetcher.load_texture_cache()
+    assert len(texture_fetcher.cache) == EXPECTED_ENTRY_COUNT
