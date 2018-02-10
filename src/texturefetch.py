@@ -113,7 +113,7 @@ class TextureCacheFetchService(QtCore.QObject):
         for i, entry in enumerate(entries):
             
             if max_time is not None:
-                if abs(current_time - entry.time) > max_time:
+                if current_time - entry.time > max_time:
                     continue
             
             uuid = entry.uuid
