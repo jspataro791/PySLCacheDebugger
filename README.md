@@ -26,6 +26,8 @@ Run installer.iss in Inno Setup to create an installer executable.
 
 2/10/2018
 * Glymur not reading the file from memory is causing serious bottlenecks. It takes several minutes to load a 450MB cache file whereas SLCacheViewer took, maybe, 10 seconds.
+* Problem saving files when not running as administrator. 
+* Should rewrite in C# for better JPEG2000 support?
 
 2/5/2018
 * Need to think about architecture to do asynchronous thumbnail fetch.
