@@ -2,6 +2,9 @@
 Application configuration
 '''
 
+
+
+
 # --- metadata
 
 APPLICATION_NAME = 'PySLCacheDebugger'
@@ -17,3 +20,10 @@ INFO_ENABLED = True
 
 # --- paths
 
+# --- arg override
+
+import sys
+args = sys.argv
+
+if 'debug' in args:
+    STDO_ENABLED = True

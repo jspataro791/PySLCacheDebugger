@@ -212,7 +212,7 @@ class MenuBar(QtWidgets.QMenuBar):
         menus = {
             'File': [('Open Texture Cache', self.open_texture_cache.emit),
                      (None, None), # sep
-                     ('Refresh', self.refresh.emit),
+                     #('Refresh', self.refresh.emit),
                      (None, None), # sep
                      ('Close', self.close.emit)],
 
