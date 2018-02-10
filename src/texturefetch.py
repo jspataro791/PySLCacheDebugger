@@ -14,6 +14,9 @@ import weakref
 from io import BytesIO
 from collections import namedtuple
 from traceback import format_exc
+from multiprocessing import Process
+
+from PyQt5 import QtCore
 
 import glymur
 import numpy as np
@@ -35,51 +38,96 @@ ENTRY_STRUCT_FORMAT = '16BiiI'
 TEXTURE_CACHE_BYTE_COUNT = 600
 
 
+
 class TextureFetchException(BaseException):
     pass
 
+class TextureFetchThumbnail(object):
 
-class TextureCacheFetchService(object):
+    ''' Texture cache thumbnail data container. '''
 
-    ''' Handles concurrent fetching of texture cache items.'''
+    __slots__ = ['entry', 'thumbnail']
 
-    def __init__(self):
-        self.fetcher = None
+    def __init__(self, entry, thumbnail):
 
-    def set_cache_path(self, responder):
-        '''Sets the cache path.
+        self.entry = entry
+        self.thumbnail = thumbnail
 
-        Expects a responder containing the path to the
-        "texture.entries" file and a callback that accepts
-        True if set was successful or a string traceback
-        if not.'''
+    @property
+    def uuid(self):
+        return self.entry.uuid
 
-        entries_file_path = responder.data
+    @property
+    def time(self):
+        return self.entry.time
 
-        try:
-            self.fetcher = TextureCacheFetcher(entries_file_path)
-            responder.respond(True)
-        except Exception:
-            responder.respond(format_exc())
 
-    def fetch_thumbails(self, responder):
-        '''Fetches texture cache thumbnails and UUID.
+class TextureFetchBitmap(object):
 
-        Expects a responder containing the number of
-        thumbnails to fetch (None for inf) and a callback
-        that can handle each resulting TextureFetchThumbnail
-        as they are fetched.'''
+    ''' Texture cache bitmap data container. '''
 
-        pass
+    __slots__ = ['entry', 'bitmap']
 
-    def fetch_bitmap(self, responder):
-        '''Fetches a complete texture cache bitmap.
+    def __init__(self, entry, bitmap):
 
-        Expects a responder containing the UUID of the
-        texture and a callback that can handle the resulting
-        TextureFetchBitmap when it is fetched.'''
+        self.entry = entry
+        self.bitmap = bitmap
 
-        pass
+    @property
+    def uuid(self):
+        return self.entry.uuid
+
+    @property
+    def time(self):
+        return self.entry.time
+
+
+class TextureCacheFetchService(QtCore.QObject):
+
+    ''' Handles fetching of texture cache items.'''
+
+    thumbnail_available = QtCore.pyqtSignal(TextureFetchThumbnail)
+    bitmap_available = QtCore.pyqtSignal(TextureFetchBitmap)
+
+    def __init__(self, fetcher, parent=None):
+        QtCore.QObject.__init__(self, parent)
+        self.fetcher = fetcher
+        self.local_texture_cache = TextureCache()
+
+    def fetch_thumbnails(self):
+        '''Fetches texture cache thumbnails and UUID.'''
+
+        entry_file_contents = self.fetcher.load_entry_file_contents()
+        cache_file_contents = self.fetcher.load_cache_file_contents()
+        header = self.fetcher.load_header(entry_file_contents)
+        entries = self.fetcher.load_entries(entry_file_contents, header.entry_count)
+
+        for i, entry in enumerate(entries):
+            cache = self.fetcher.load_texture_cache(cache_file_contents, i)
+            thumbnail = None #TODO: thumbnail conversion
+            new_thumbnail_item = TextureFetchThumbnail(entry, thumbnail)
+            self.local_texture_cache.add_cache(entry.uuid, cache)
+            self.thumbnail_available.emit(new_thumbnail_item)
+            
+
+    def fetch_bitmap(self, entry):
+        '''Fetches a complete texture cache bitmap. '''
+        
+        uuid = entry.uuid
+
+        if uuid not in self.local_texture_thumbnails.uuids:
+            raise TextureFetchException('UUID "%s" cache not found in local texture cache.' % uuid)
+
+        body = self.fetcher.load_texture_body(uuid)
+        cache = self.local_texture_thumbnails.get_cache(uuid)
+
+        if body is None:
+            return cache
+        else:
+            full_image = cache + body
+            bitmap = None #TODO: bitmap conversion
+            new_bitmap_item = TextureFetchBitmap(entry, bitmap)
+            self.bitmap_available.emit(new_bitmap_item)
 
 
 class TextureCacheFetcher(object):
@@ -88,7 +136,6 @@ class TextureCacheFetcher(object):
 
     def __init__(self, entries_file_path):
         self.set_entries_path(entries_file_path)
-        self.local_texture_cache = TextureCache()
 
     @property
     def cache(self):
@@ -201,23 +248,13 @@ class TextureCacheFetcher(object):
 
         return entries
 
-    def load_texture_cache(self, max_count=None):
-        ''' Loads texture cache in the local/memory cache. '''
+    def load_texture_cache(self, cache_file_contents, entry_number):
+        ''' Loads texture cache from cache file contents given entry number.'''
 
-        entry_file_contents = self.load_entry_file_contents()
-        cache_file_contents = self.load_cache_file_contents()
-        header = self.load_header(entry_file_contents)
-        entries = self.load_entries(entry_file_contents, header.entry_count)
+        cache_file_contents.seek(TEXTURE_CACHE_BYTE_COUNT*entry_number)
+        return cache_file_contents.read(TEXTURE_CACHE_BYTE_COUNT)
 
-        for entry in entries:
-            uuid = entry.uuid
-            try:
-                cache = cache_file_contents.read(TEXTURE_CACHE_BYTE_COUNT)
-                self.local_texture_cache.add_cache(uuid, cache)
-            except IOError as e:
-                WARN('Failed to load texture cache for "%s".' % uuid)
-                ERROR('', add_exception=True)
-                self.local_texture_cache(uuid, None)
+
             
     def load_texture_body(self, uuid):
 
@@ -244,7 +281,11 @@ class TextureCache(object):
         self._cache = {}
 
     def __len__(self):
-        return len(self._cache)
+        return len(self._cache.keys())
+
+    @property
+    def uuids(self):
+        return self._cache.keys()
 
     def add_cache(self, uuid, cache):
         ''' Add cache contents for UUID '''
@@ -269,8 +310,10 @@ class TextureCache(object):
         
         self._cache = {}
 
-class TextureCacheObserver(object):
-    pass
+
+        
+
+    
 
 class TextureCacheHeader(object):
 
@@ -299,53 +342,5 @@ class TextureCacheEntry(object):
         self.time = time
 
 
-class TextureFetchResponder(object):
-
-    ''' Texture fetch responder. '''
-
-    def __init__(self, data, callback):
-        self.data
-        self.callback
-
-    def respond(self, result):
-        self.callback(result)
 
 
-class TextureFetchThumbnail(object):
-
-    ''' Texture cache thumbnail data container. '''
-
-    __slots__ = ['entry', 'thumbnail']
-
-    def __init__(self, entry, thumbnail):
-
-        self.entry = entry
-        self.thumbnail = thumbnail
-
-    @property
-    def uuid(self):
-        return self.entry.uuid
-
-    @property
-    def time(self):
-        return self.entry.time
-
-
-class TextureFetchBitmap(object):
-
-    ''' Texture cache bitmap data container. '''
-
-    __slots__ = ['entry', 'bitmap']
-
-    def __init__(self, entry, bitmap):
-
-        self.entry = entry
-        self.bitmap = bitmap
-
-    @property
-    def uuid(self):
-        return self.entry.uuid
-
-    @property
-    def time(self):
-        return self.entry.time

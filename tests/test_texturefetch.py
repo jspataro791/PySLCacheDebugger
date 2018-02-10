@@ -12,12 +12,19 @@ sys.path.append(src_path)
 
 from tconfig import *
 
+from texturefetch import TextureCacheFetchService
 from texturefetch import TextureCacheFetcher
 
 @pytest.fixture
 def texture_fetcher():
     fetcher = TextureCacheFetcher(MOCK_ENTRIES_PATH)
     return fetcher
+
+@pytest.fixture
+def texture_fetch_service():
+    fetcher = TextureCacheFetcher(MOCK_ENTRIES_PATH)
+    fetch_service = TextureCacheFetchService(fetcher)
+    return fetch_service
 
 def test_fetcher_path(texture_fetcher):
     assert texture_fetcher.entries_path == MOCK_ENTRIES_PATH
@@ -36,6 +43,12 @@ def test_load_entries(texture_fetcher):
     entries = texture_fetcher.load_entries(entries_file_contents, EXPECTED_ENTRY_COUNT)
     assert len(entries) == EXPECTED_ENTRY_COUNT
 
-def test_load_cache(texture_fetcher):
-    texture_fetcher.load_texture_cache()
-    assert len(texture_fetcher.cache) == EXPECTED_ENTRY_COUNT
+def test_load_thumbnails(texture_fetch_service):
+    thumbnails = []
+    def add_thumbnail(thumbnail):
+        thumbnails.append(thumbnail)
+    texture_fetch_service.thumbnail_available.connect(add_thumbnail)
+    texture_fetch_service.fetch_thumbnails()
+    assert len(thumbnails) == EXPECTED_ENTRY_COUNT
+
+
