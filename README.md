@@ -8,6 +8,7 @@ A cache searcher/debugger for the Second Life viewer texture cache. This project
 * Numpy
 * PyQt5
 * PyInstaller
+* Inno Setup
 
 ## Notes
 
