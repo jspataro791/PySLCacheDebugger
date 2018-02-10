@@ -94,6 +94,9 @@ class TextureCacheFetchService(QtCore.QObject):
         self.fetcher = fetcher
         self.local_texture_cache = TextureCache()
 
+    def set_fetcher(self, fetcher):
+        self.fetcher = fetcher
+
     def fetch_thumbnails(self):
         '''Fetches texture cache thumbnails and UUID.'''
 

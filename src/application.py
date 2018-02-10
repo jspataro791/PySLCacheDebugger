@@ -6,7 +6,11 @@ and readies them for execution.
 '''
 
 import sys
-from PyQt5 import QtWidgets
+
+from PyQt5 import QtCore, QtWidgets
+
+from appconfig import *
+from backend import Backend
 from view import MainWindow
 
 
@@ -15,8 +19,28 @@ class Application(QtWidgets.QApplication):
     def __init__(self):
         QtWidgets.QApplication.__init__(self, sys.argv)
 
-        self.main_window = MainWindow()
+        # --- members
+        self.presentation = MainWindow()
+        self.backend = Backend()
+        self.backend_thread = QtCore.QThread()
+        self.backend.moveToThread(self.backend_thread)
+
+        # --- signal/slot connections
+
+        # front to back
+        self.presentation.set_cache_path.connect(self.backend.set_cache_path)
+        self.presentation.refresh.connect(self.backend.refresh)
+
+        # back to front
+        self.backend.thumbnail_available.connect(self.presentation.thumbnail_view.add_thumbnail)
+        self.backend.bitmap_available.connect(self.presentation.save_bitmap)
+
+        # --- start backend thread
+        self.backend_thread.start()
+
+        # --- misc setup
+        self.setStyle(APPLICATION_STYLE)
 
     def execute(self):
-        self.main_window.show()
+        self.presentation.show()
         self.exec_()
