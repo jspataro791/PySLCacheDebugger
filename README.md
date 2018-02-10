@@ -1,7 +1,7 @@
 # PySLCacheDebugger
 A cache searcher/debugger for the Second Life viewer texture cache. This project is still in initial development with the hopes of soon providing a user interface to browse the cache (thumbnails). This project aims to be an open source replacement to the widely-used SLCacheViewer which was recently broken by a change in the SL viewer source code. 
 
-Note that this program will *only* work for Second Life viewers with the new core cache changes. This has been tested with Firestorm 5.0.11.
+Note that this program will *only* work for Second Life viewers with the new core cache changes. This has been tested with Firestorm 5.0.11 and Second Life Viewer 5.1.1.512121.
 
 Currently only supports Windows 10 platform.
 
