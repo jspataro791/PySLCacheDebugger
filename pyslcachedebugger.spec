@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['src\\main.py'],
-             pathex=['C:\\Users\\john\\Documents\\Python Scripts\\Repositories\\pySLCacheDebugger'],
+             pathex=['.'],
              binaries=[],
              datas=[],
              hiddenimports=[],

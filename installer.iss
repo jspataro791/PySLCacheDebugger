@@ -28,8 +28,10 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 
 [Files]
+Source: "openjpeg-v2.3.0-windows-x64\*"; DestDir: "{pf}\openjpeg-v2.3.0-windows-x64"; Flags: recursesubdirs
 Source: "dist\PySLCacheDebugger\*"; DestDir: "{app}";  Flags: recursesubdirs
 Source: "LICENSE.txt"; DestDir: "{app}"; DestName: "LICENSE"
+Source: "config\glymur\glymurrc"; DestDir: "{%USERPROFILE}\glymur\"; DestName: "glymurrc"
 
 [Icons]
 Name: "{group}\PySLCacheDebugger"; Filename: "{app}\PySLCacheDebugger.exe"
