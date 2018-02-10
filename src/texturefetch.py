@@ -10,6 +10,7 @@ import os
 import struct
 import sys
 import weakref
+import time
 from collections import namedtuple
 from io import BytesIO
 from traceback import format_exc
@@ -97,7 +98,7 @@ class TextureCacheFetchService(QtCore.QObject):
     def clear_local_cache(self):
         self.local_texture_cache.clear()
 
-    def fetch_thumbnails(self, rebuild=True):
+    def fetch_thumbnails(self, rebuild=True, max_time=None):
         '''Fetches texture cache thumbnails and UUID.'''
 
         entry_file_contents = self.fetcher.load_entry_file_contents()
@@ -105,19 +106,31 @@ class TextureCacheFetchService(QtCore.QObject):
         header = self.fetcher.load_header(entry_file_contents)
         entries = self.fetcher.load_entries(entry_file_contents, header.entry_count)
 
+        current_time = time.time()
+
+        should_seek = not rebuild
+            
         for i, entry in enumerate(entries):
+            
+            if max_time is not None:
+                if abs(current_time - entry.time) > max_time:
+                    continue
+            
             uuid = entry.uuid
             if not rebuild:
                 if uuid in self.local_texture_cache.uuids:
                     continue
-            cache = self.fetcher.load_texture_cache(cache_file_contents, i, noseek=True)
+            cache = self.fetcher.load_texture_cache(cache_file_contents, i, noseek=should_seek)
             body = self.fetcher.load_texture_body(uuid)
+
+            
+                
             
             if body is None:
                 thumbnail = convert_j2c_to_qpixmap(uuid, cache, thumbnail=True)
             else:
                 thumbnail = convert_j2c_to_qpixmap(uuid, cache + body, thumbnail=True)
-            
+
             self.local_texture_cache.add_cache(entry.uuid, cache)
             new_thumbnail_item = TextureFetchThumbnail(entry, thumbnail)
             self.thumbnail_available.emit(new_thumbnail_item)

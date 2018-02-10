@@ -7,6 +7,8 @@ Contains utility functions .
 import io
 import os
 import sys
+import tempfile
+from tkinter import Tk
 from traceback import format_exc
 
 import glymur
@@ -67,15 +69,9 @@ def convert_j2c_to_qpixmap(uuid, j2c_contents, thumbnail=False):
     
     NOTE: A QApplication MUST be instantiated before running this!'''
     
-    
-    abs_temp_dir = os.path.abspath(TEMPORARY_DIR_PATH)
-
-    if not os.path.exists(abs_temp_dir):
-        os.makedirs(abs_temp_dir)
-
-    temp_path = os.path.abspath(os.path.join(TEMPORARY_DIR_PATH, uuid + '.j2c'))
-    with open(temp_path, 'wb') as tempfile:
-        tempfile.write(j2c_contents)
+    tmpfile, temp_path = tempfile.mkstemp()
+    with os.fdopen(tmpfile, 'wb') as tmpfile:
+        tmpfile.write(j2c_contents)
 
     try:
         img = glymur.Jp2k(temp_path)
@@ -86,15 +82,12 @@ def convert_j2c_to_qpixmap(uuid, j2c_contents, thumbnail=False):
 
     except Exception:
         WARN('Could not convert "%s" to pixmap. Texture stream may be incomplete.' % uuid)
-        try:
-            os.remove(temp_path)
-        except IOError:
-            WARN('Could not remove temporary file at "%s".' % temp_path)
         return None
+
     try:
         os.remove(temp_path)
     except IOError:
-        WARN('Could not remove temporary file at "%s".' % temp_path)
+        print('Could not remove temp file for "%s".' % uuid)
     
     pixmap = QPixmap(ndarray_to_qimage(inmem_img))
 
@@ -126,3 +119,12 @@ def ndarray_to_qimage(im, copy=False):
     except Exception as e:
         WARN('Unknown error converting ndarray to pixmap.\n%s' % format_exc())
         return QImage()
+
+def copy_str_to_clipboard(msg):
+    '''Copies a string to the system clipboard.'''
+    r = Tk()
+    r.withdraw()
+    r.clipboard_clear()
+    r.clipboard_append(msg)
+    r.update()
+    r.destroy()

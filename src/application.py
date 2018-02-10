@@ -16,12 +16,7 @@ from appconfig import *
 from backend import Backend
 from view import MainWindow
 
-# --- PyQt5 missing exception hook fix
-if QtCore.QT_VERSION >= 0x50501:
-    def excepthook(type_, value, traceback_):
-        traceback.print_exception(type_, value, traceback_)
-        QtCore.qFatal('')
-    sys.excepthook = excepthook
+
 
 
 class Application(QtWidgets.QApplication):
@@ -54,9 +49,6 @@ class Application(QtWidgets.QApplication):
         # --- misc setup
         self.setStyle(APPLICATION_STYLE)
 
-    def __del__(self):
-        if os.path.exists(TEMPORARY_DIR_PATH):
-            shutil.rmtree(TEMPORARY_DIR_PATH)
 
     def execute(self):
         self.presentation.show()

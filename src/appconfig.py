@@ -17,4 +17,3 @@ INFO_ENABLED = True
 
 # --- paths
 
-TEMPORARY_DIR_PATH = './temp'

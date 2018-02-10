@@ -50,7 +50,7 @@ class Backend(QtCore.QObject):
         INFO('Refreshing thumbnails.')
         self.fetch_service.fetch_thumbnails(rebuild=False)
 
-    def rebuild(self):
+    def rebuild(self, seconds):
         INFO('Clearing.')
         self.fetch_service.clear_local_cache()
-        self.fetch_service.fetch_thumbnails()
+        self.fetch_service.fetch_thumbnails(max_time=seconds)

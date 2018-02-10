@@ -11,3 +11,6 @@ __pycache__
 temp
 texture.entries.lnk
 prof
+build
+dist
+installer

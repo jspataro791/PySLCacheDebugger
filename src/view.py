@@ -18,7 +18,7 @@ from utils import *
 class MainWindow(QtWidgets.QMainWindow):
 
     refresh = QtCore.pyqtSignal()
-    rebuild = QtCore.pyqtSignal()
+    rebuild = QtCore.pyqtSignal(int)
     set_cache_path = QtCore.pyqtSignal(str)
     request_preview = QtCore.pyqtSignal(str)
     
@@ -58,8 +58,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if path:
             self.set_cache_path.emit(path)
+            time_window = TimeEntryView()
+            time_window.exec_()
+            seconds = time_window.seconds
             self.thumbnail_view.clear()
-            self.rebuild.emit()
+            self.rebuild.emit(seconds)
 
 
     def refresh_thumbnails(self):
@@ -75,6 +78,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def save_bitmap(self):
         pass
+        
 
 
 class ThumbnailView(QtWidgets.QListView):
@@ -94,6 +98,7 @@ class ThumbnailView(QtWidgets.QListView):
 
         # --- signal/slot
         self.doubleClicked.connect(self.handle_double_click)
+        
 
         # --- setup
         #self.sort_proxy.setSourceModel(self.local_item_model)
@@ -105,6 +110,8 @@ class ThumbnailView(QtWidgets.QListView):
         self.setTextElideMode(QtCore.Qt.ElideRight)
         self.refresher.timeout.connect(self.purge_bulk)
         self.refresher.start(1000)
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.context_menu)
 
     def handle_double_click(self, index):
         item = self.local_item_model.itemFromIndex(index)
@@ -112,6 +119,21 @@ class ThumbnailView(QtWidgets.QListView):
             return
         uuid = item.text()
         self.request_preview.emit(uuid)
+
+    def context_menu(self, pos):
+        global_pos = self.mapToGlobal(pos)
+        index = self.indexAt(pos)
+        item = self.local_item_model.itemFromIndex(index)
+        INFO('Context menu request on thumbnail view for item "%r"' % item.text())
+        if item is None:
+            return
+        menu = QtWidgets.QMenu()
+        menu.addAction('Copy UUID', lambda: self.copy_item_uuid(item))
+        menu.exec_(global_pos)
+    
+    def copy_item_uuid(self, item):
+        copy_str_to_clipboard(item.text())
+        
 
     def clear(self):
         self.local_item_model.clear()
@@ -130,9 +152,6 @@ class ThumbnailView(QtWidgets.QListView):
         self.thumbnail_bulk.append(new_model_item)
         self.load_count += 1
         self.load_count_changed.emit(self.load_count)
-
-        if len(self.thumbnail_bulk) > 100:
-            self.purge_bulk()
     
     def purge_bulk(self):
         for item in self.thumbnail_bulk:
@@ -197,3 +216,46 @@ class MenuBar(QtWidgets.QMenuBar):
                     new_action.triggered.connect(action_callback)
                     new_menu.addAction(new_action)
             self.addMenu(new_menu)
+
+class TimeEntryView(QtWidgets.QDialog):
+
+    def __init__(self, parent=None):
+        QtWidgets.QDialog.__init__(self, parent)
+
+        # --- members
+        self.label = QtWidgets.QLabel('Load texture cache for the last:')
+        self.days = QtWidgets.QSpinBox()
+        self.hours = QtWidgets.QSpinBox()
+        self.minutes = QtWidgets.QSpinBox()
+        self.ok = QtWidgets.QPushButton('OK')
+
+        # --- setup
+        self.setWindowTitle('Cache time')
+
+        self.days.setSuffix(' days')
+        self.hours.setSuffix(' hours')
+        self.minutes.setSuffix(' minutes')
+
+        self.days.setMinimum(0)
+        self.hours.setMinimum(0)
+        self.minutes.setMinimum(0)
+
+        # --- layout
+        self.time_layout = QtWidgets.QHBoxLayout()
+        self.time_layout.addWidget(self.days)
+        self.time_layout.addWidget(self.hours)
+        self.time_layout.addWidget(self.minutes)
+
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.layout().addWidget(self.label)
+        self.layout().addLayout(self.time_layout)
+        self.layout().addWidget(self.ok)
+
+        # --- signal/slot
+        self.ok.clicked.connect(self.close)
+
+
+
+    @property
+    def seconds(self):
+        return 86400*self.days.value() + 3600*self.hours.value() + 60 * self.minutes.value()
