@@ -2,14 +2,19 @@
 Application configuration
 '''
 
+# --- metadata
+
+APPLICATION_NAME = 'PySLCacheDebugger'
+APPLICATION_ID = 'pyslcachedebugger'
+APPLICATION_STYLE = 'cleanlooks'
+
 # --- debugging/logging
 
 WARN_ENABLED = True
 ERROR_ENABLED = True
 INFO_ENABLED = True
 
-# --- metadata
+# --- paths
 
-APPLICATION_NAME = 'PySLCacheDebugger'
-APPLICATION_ID = 'pyslcachedebugger'
-APPLICATION_STYLE = 'cleanlooks'
+TEMPORARY_DIR_PATH = './temp'
+

@@ -10,10 +10,17 @@ import pytest
 src_path = os.path.abspath(os.path.join(__file__, '../../src'))
 sys.path.append(src_path)
 
+from PyQt5.QtWidgets import QApplication
+
 from tconfig import *
 
 from texturefetch import TextureCacheFetchService
 from texturefetch import TextureCacheFetcher
+
+@pytest.fixture
+def qapp():
+    app = QApplication(sys.argv)
+    return app
 
 @pytest.fixture
 def texture_fetcher():
@@ -43,7 +50,7 @@ def test_load_entries(texture_fetcher):
     entries = texture_fetcher.load_entries(entries_file_contents, EXPECTED_ENTRY_COUNT)
     assert len(entries) == EXPECTED_ENTRY_COUNT
 
-def test_load_thumbnails(texture_fetch_service):
+def test_load_thumbnails(qapp, texture_fetch_service):
     thumbnails = []
     def add_thumbnail(thumbnail):
         thumbnails.append(thumbnail)

@@ -10,7 +10,7 @@ Contains the view/presentation layer.
 '''
 
 from appconfig import *
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -42,13 +42,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def open_texture_cache(self):
-        pass
+        
+        path = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Open texture cache',
+            '', 'Cache Entries File (*.entries)',
+        )[0]
+
+        if path:
+            self.set_cache_path.emit(path)
+
+        self.refresh_thumbnails()
 
     def show_preferences(self):
         pass
 
     def refresh_thumbnails(self):
-        pass
+        self.thumbnail_view.clear()
+        self.refresh.emit()
 
     def save_bitmap(self):
         pass
@@ -59,8 +69,30 @@ class ThumbnailView(QtWidgets.QListView):
     def __init__(self, parent=None):
         QtWidgets.QListView.__init__(self, parent)
 
-    def add_thumbnail(self, texture_fetch_thumbnail):
-        pass
+        # --- members
+        self.local_item_model = QtGui.QStandardItemModel()
+
+        # --- setup
+        self.setModel(self.local_item_model)
+        #self.setViewMode(self.IconMode)
+        self.setIconSize(QtCore.QSize(64,64))
+        self.setWordWrap(True)
+        self.setTextElideMode(QtCore.Qt.ElideRight)
+
+    def clear(self):
+        self.local_item_model.clear()
+
+    def add_thumbnail(self, uuid, thumbnail):
+        
+        if thumbnail is None:
+            return
+            
+        new_model_item = QtGui.QStandardItem(uuid)
+        new_model_item.setIcon(QtGui.QIcon(thumbnail))
+        new_model_item.setEditable(False)
+        self.local_item_model.appendRow(new_model_item)
+
+        
 
 class MenuBar(QtWidgets.QMenuBar):
     

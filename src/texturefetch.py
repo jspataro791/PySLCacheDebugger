@@ -97,6 +97,9 @@ class TextureCacheFetchService(QtCore.QObject):
     def set_fetcher(self, fetcher):
         self.fetcher = fetcher
 
+    def clear_local_cache(self):
+        self.local_texture_cache.clear()
+
     def fetch_thumbnails(self):
         '''Fetches texture cache thumbnails and UUID.'''
 
@@ -106,10 +109,19 @@ class TextureCacheFetchService(QtCore.QObject):
         entries = self.fetcher.load_entries(entry_file_contents, header.entry_count)
 
         for i, entry in enumerate(entries):
+            uuid = entry.uuid
             cache = self.fetcher.load_texture_cache(cache_file_contents, i)
-            thumbnail = None #TODO: thumbnail conversion
+            body = self.fetcher.load_texture_body(uuid)
+            
+            if body is None:
+                thumbnail = convert_j2c_to_qpixmap(uuid, cache, max_width=64)
+                self.local_texture_cache.add_cache(entry.uuid, cache)
+            else:
+                thumbnail = convert_j2c_to_qpixmap(uuid, cache + body, max_width=64)
+                self.local_texture_cache.add_cache(entry.uuid, cache + body)
+
             new_thumbnail_item = TextureFetchThumbnail(entry, thumbnail)
-            self.local_texture_cache.add_cache(entry.uuid, cache)
+            
             self.thumbnail_available.emit(new_thumbnail_item)
             
 
@@ -128,7 +140,7 @@ class TextureCacheFetchService(QtCore.QObject):
             return cache
         else:
             full_image = cache + body
-            bitmap = None #TODO: bitmap conversion
+            bitmap = convert_j2c_to_qpixmap(uuid, full_image)
             new_bitmap_item = TextureFetchBitmap(entry, bitmap)
             self.bitmap_available.emit(new_bitmap_item)
 
@@ -266,7 +278,7 @@ class TextureCacheFetcher(object):
         subdir_name = uuid[0]
         cache_dir = self.cache_directory
         texture_file = uuid + '.texture'
-        path_to_body = os.path.join(cache, subdir_name,texture_file)
+        path_to_body = os.path.join(cache_dir, subdir_name,texture_file)
 
         if not os.path.exists(path_to_body):
             INFO('Did not find texture body for "%s"' % uuid)
