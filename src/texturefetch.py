@@ -123,9 +123,6 @@ class TextureCacheFetchService(QtCore.QObject):
             cache = self.fetcher.load_texture_cache(cache_file_contents, i, noseek=should_seek)
             body = self.fetcher.load_texture_body(uuid)
 
-            
-                
-            
             if body is None:
                 thumbnail = convert_j2c_to_qpixmap(uuid, cache, thumbnail=True)
             else:

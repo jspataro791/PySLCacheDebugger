@@ -21,6 +21,7 @@ class MainWindow(QtWidgets.QMainWindow):
     rebuild = QtCore.pyqtSignal(int)
     set_cache_path = QtCore.pyqtSignal(str)
     request_preview = QtCore.pyqtSignal(str)
+    request_save = QtCore.pyqtSignal(str, str)
     
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
@@ -36,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menu_bar.refresh.connect(self.refresh_thumbnails)
 
         self.thumbnail_view.request_preview.connect(self.request_preview)
+        self.thumbnail_view.request_save.connect(self.save_bitmap)
         self.thumbnail_view.load_count_changed.connect(self.update_load_count)
         
         # --- setup
@@ -76,14 +78,29 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_load_count(self, count):
         self.status.setText('Loaded %i Textures' % count)
 
-    def save_bitmap(self):
-        pass
+    def save_bitmap(self, uuid, extension):
+        
+        if extension == ".bmp":
+            save_filter = "Bitmap (*.bmp)"
+        elif extension == ".png":
+            save_filter = "Portable Network Graphics (*.png)"
+        else:
+            ERROR('Bad image extension "%s".' % extension)
+            return
+
+        path = QtWidgets.QFileDialog.getSaveFileName(
+            self, 'Save Image',
+            '', save_filter
+        )[0]
+        if path:
+            self.request_save.emit(uuid, path)
         
 
 
 class ThumbnailView(QtWidgets.QListView):
     
     request_preview = QtCore.pyqtSignal(str)
+    request_save = QtCore.pyqtSignal(str, str)
     load_count_changed = QtCore.pyqtSignal(int)
     
     def __init__(self, parent=None):
@@ -129,7 +146,10 @@ class ThumbnailView(QtWidgets.QListView):
             return
         menu = QtWidgets.QMenu()
         menu.addAction('Copy UUID', lambda: self.copy_item_uuid(item))
+        menu.addAction('Save (BMP)', lambda: self.request_save.emit(item.text(), '.bmp'))
+        menu.addAction('Save (PNG)', lambda: self.request_save.emit(item.text(), '.png'))
         menu.exec_(global_pos)
+        self.persist_menu = menu
     
     def copy_item_uuid(self, item):
         copy_str_to_clipboard(item.text())
@@ -179,10 +199,9 @@ class TexturePreviewView(QtWidgets.QDialog):
 class MenuBar(QtWidgets.QMenuBar):
     
     open_texture_cache = QtCore.pyqtSignal()
-    save_selected = QtCore.pyqtSignal()
-    save_all = QtCore.pyqtSignal()
     refresh = QtCore.pyqtSignal()
     close = QtCore.pyqtSignal()
+    about = QtCore.pyqtSignal()
     
     
     def __init__(self, parent=None):
@@ -195,12 +214,9 @@ class MenuBar(QtWidgets.QMenuBar):
                      (None, None), # sep
                      ('Refresh', self.refresh.emit),
                      (None, None), # sep
-                     ('Save All', self.save_all.emit),
-                     ('Save Selected', self.save_selected.emit),
-                     (None, None), # sep
                      ('Close', self.close.emit)],
 
-            'Help': []
+            'Help': [('About', self.about)]
         }
 
         self.load_menu_schema(menus)

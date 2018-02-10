@@ -17,6 +17,7 @@ UninstallDisplayIcon={app}\MyProg.exe
 Compression=lzma2
 OutputDir=installer
 OutputBaseFilename=PySLCacheDebugger_01_{#DateTime}
+LicenseFile=LICENSE.txt
 SolidCompression=yes
 ; "ArchitecturesAllowed=x64" specifies that Setup cannot run on
 ; anything but x64.

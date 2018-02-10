@@ -46,6 +46,12 @@ class Backend(QtCore.QObject):
         pixmap = self.fetch_service.fetch_bitmap(uuid)
         return pixmap
 
+    def save_bitmap(self, uuid, path):
+        INFO('Saving "%s" to path "%s".' % (uuid, path))
+        pixmap = self.fetch_service.fetch_bitmap(uuid)
+        pixmap.save(path)
+        
+
     def refresh(self):
         INFO('Refreshing thumbnails.')
         self.fetch_service.fetch_thumbnails(rebuild=False)

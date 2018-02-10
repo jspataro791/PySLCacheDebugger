@@ -37,6 +37,7 @@ class Application(QtWidgets.QApplication):
         self.presentation.refresh.connect(self.backend.refresh)
         self.presentation.rebuild.connect(self.backend.rebuild)
         self.presentation.request_preview.connect(self.backend.preview_request)
+        self.presentation.request_save.connect(self.backend.save_bitmap)
 
         # back to front
         self.backend.thumbnail_available.connect(self.presentation.thumbnail_view.add_thumbnail)
