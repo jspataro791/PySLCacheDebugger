@@ -8,3 +8,6 @@ __pycache__
 .cache
 
 *.pyc
+temp
+texture.entries.lnk
+prof

@@ -10,16 +10,13 @@ import os
 import struct
 import sys
 import weakref
-
-from io import BytesIO
 from collections import namedtuple
+from io import BytesIO
 from traceback import format_exc
-from multiprocessing import Process
-
-from PyQt5 import QtCore
 
 import glymur
 import numpy as np
+from PyQt5 import QtCore
 
 from utils import *
 
@@ -100,7 +97,7 @@ class TextureCacheFetchService(QtCore.QObject):
     def clear_local_cache(self):
         self.local_texture_cache.clear()
 
-    def fetch_thumbnails(self):
+    def fetch_thumbnails(self, rebuild=True):
         '''Fetches texture cache thumbnails and UUID.'''
 
         entry_file_contents = self.fetcher.load_entry_file_contents()
@@ -110,39 +107,37 @@ class TextureCacheFetchService(QtCore.QObject):
 
         for i, entry in enumerate(entries):
             uuid = entry.uuid
-            cache = self.fetcher.load_texture_cache(cache_file_contents, i)
+            if not rebuild:
+                if uuid in self.local_texture_cache.uuids:
+                    continue
+            cache = self.fetcher.load_texture_cache(cache_file_contents, i, noseek=True)
             body = self.fetcher.load_texture_body(uuid)
             
             if body is None:
-                thumbnail = convert_j2c_to_qpixmap(uuid, cache, max_width=64)
-                self.local_texture_cache.add_cache(entry.uuid, cache)
+                thumbnail = convert_j2c_to_qpixmap(uuid, cache, thumbnail=True)
             else:
-                thumbnail = convert_j2c_to_qpixmap(uuid, cache + body, max_width=64)
-                self.local_texture_cache.add_cache(entry.uuid, cache + body)
-
-            new_thumbnail_item = TextureFetchThumbnail(entry, thumbnail)
+                thumbnail = convert_j2c_to_qpixmap(uuid, cache + body, thumbnail=True)
             
+            self.local_texture_cache.add_cache(entry.uuid, cache)
+            new_thumbnail_item = TextureFetchThumbnail(entry, thumbnail)
             self.thumbnail_available.emit(new_thumbnail_item)
             
 
-    def fetch_bitmap(self, entry):
+    def fetch_bitmap(self, uuid):
         '''Fetches a complete texture cache bitmap. '''
         
-        uuid = entry.uuid
 
-        if uuid not in self.local_texture_thumbnails.uuids:
+        if uuid not in self.local_texture_cache.uuids:
             raise TextureFetchException('UUID "%s" cache not found in local texture cache.' % uuid)
 
+        cache = self.local_texture_cache.get_cache(uuid)
         body = self.fetcher.load_texture_body(uuid)
-        cache = self.local_texture_thumbnails.get_cache(uuid)
 
         if body is None:
-            return cache
+            pixmap = convert_j2c_to_qpixmap(uuid, cache)
         else:
-            full_image = cache + body
-            bitmap = convert_j2c_to_qpixmap(uuid, full_image)
-            new_bitmap_item = TextureFetchBitmap(entry, bitmap)
-            self.bitmap_available.emit(new_bitmap_item)
+            pixmap = convert_j2c_to_qpixmap(uuid, cache + body)
+        return pixmap
 
 
 class TextureCacheFetcher(object):
@@ -263,11 +258,14 @@ class TextureCacheFetcher(object):
 
         return entries
 
-    def load_texture_cache(self, cache_file_contents, entry_number):
+    def load_texture_cache(self, cache_file_contents, entry_number, noseek=False):
         ''' Loads texture cache from cache file contents given entry number.'''
 
-        cache_file_contents.seek(TEXTURE_CACHE_BYTE_COUNT*entry_number)
-        return cache_file_contents.read(TEXTURE_CACHE_BYTE_COUNT)
+        if noseek:
+            return cache_file_contents.read(TEXTURE_CACHE_BYTE_COUNT)
+        else:
+            cache_file_contents.seek(TEXTURE_CACHE_BYTE_COUNT*entry_number)
+            return cache_file_contents.read(TEXTURE_CACHE_BYTE_COUNT)
 
 
             
@@ -326,9 +324,6 @@ class TextureCache(object):
         self._cache = {}
 
 
-        
-
-    
 
 class TextureCacheHeader(object):
 
@@ -355,7 +350,3 @@ class TextureCacheEntry(object):
         self.body_size = body_size
         self.image_size = image_size
         self.time = time
-
-
-
-

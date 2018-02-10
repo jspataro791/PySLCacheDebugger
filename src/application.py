@@ -5,14 +5,16 @@ instantiates the application layers (GUI, backend, etc.)
 and readies them for execution.
 '''
 
+import os
 import sys
+import traceback
+import shutil
 
 from PyQt5 import QtCore, QtWidgets
 
 from appconfig import *
 from backend import Backend
 from view import MainWindow
-
 
 # --- PyQt5 missing exception hook fix
 if QtCore.QT_VERSION >= 0x50501:
@@ -38,16 +40,23 @@ class Application(QtWidgets.QApplication):
         # front to back
         self.presentation.set_cache_path.connect(self.backend.set_cache_path)
         self.presentation.refresh.connect(self.backend.refresh)
+        self.presentation.rebuild.connect(self.backend.rebuild)
+        self.presentation.request_preview.connect(self.backend.preview_request)
 
         # back to front
         self.backend.thumbnail_available.connect(self.presentation.thumbnail_view.add_thumbnail)
         self.backend.bitmap_available.connect(self.presentation.save_bitmap)
+        self.backend.preview_available.connect(self.presentation.show_preview)
 
         # --- start backend thread
         self.backend_thread.start()
 
         # --- misc setup
         self.setStyle(APPLICATION_STYLE)
+
+    def __del__(self):
+        if os.path.exists(TEMPORARY_DIR_PATH):
+            shutil.rmtree(TEMPORARY_DIR_PATH)
 
     def execute(self):
         self.presentation.show()
