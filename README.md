@@ -24,6 +24,9 @@ Run installer.iss in Inno Setup to create an installer executable.
 
 ## Notes
 
+2/13/2018
+* It appears that [Pillow](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#jpeg-2000) might support JPEG2000 codestreams. If this can be loaded in-memory, then replacing Glymur with Pillow is the obvious choice.
+
 2/10/2018
 * Glymur not reading the file from memory is causing serious bottlenecks. It takes several minutes to load a 450MB cache file whereas SLCacheViewer took, maybe, 10 seconds.
 * Problem saving files when not running as administrator. 
